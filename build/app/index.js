@@ -17,29 +17,21 @@ const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
 const body_parser_1 = __importDefault(require("body-parser"));
 const express_1 = __importDefault(require("express"));
-const db_1 = require("../clients/db");
+const user_1 = require("./user");
 function initServer() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = (0, express_1.default)();
         app.use(body_parser_1.default.json());
-        db_1.prismaClient.user.create({
-            data: {
-                firstName: 'Hemant',
-                lastName: 'Ranoliya',
-                email: 'hemant.is.there@gmail.com',
-                profileImageURL: 'https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg',
-            }
-        });
         const graphqlServer = new server_1.ApolloServer({
             typeDefs: `
+            ${user_1.User.types}
+
             type Query {
-                hello: String
+                ${user_1.User.queries}
             }
         `,
             resolvers: {
-                Query: {
-                    hello: () => 'Hello World!'
-                },
+                Query: Object.assign({}, user_1.User.resolvers.queries),
             }
         });
         yield graphqlServer.start();
