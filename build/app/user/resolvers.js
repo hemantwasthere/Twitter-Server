@@ -19,14 +19,16 @@ const jwt_1 = __importDefault(require("../../services/jwt"));
 const queries = {
     verifyGoogleToken: (parent, { token }) => __awaiter(void 0, void 0, void 0, function* () {
         const googleToken = token;
-        const googleOAuthURL = new URL('https://oauth2.googleapis.com/tokeninfo');
-        googleOAuthURL.searchParams.set('id_token', googleToken);
+        const googleOAuthURL = new URL("https://oauth2.googleapis.com/tokeninfo");
+        googleOAuthURL.searchParams.set("id_token", googleToken);
         // get user data from google
         const { data } = yield axios_1.default.get(googleOAuthURL.toString(), {
-            responseType: 'json'
+            responseType: "json",
         });
         // check if user exists
-        const user = yield db_1.prismaClient.user.findUnique({ where: { email: data.email } });
+        const user = yield db_1.prismaClient.user.findUnique({
+            where: { email: data.email },
+        });
         // if user does not exist, create user
         if (!user) {
             yield db_1.prismaClient.user.create({
@@ -34,12 +36,14 @@ const queries = {
                     email: data.email,
                     firstName: data.given_name,
                     lastName: data.family_name,
-                    profileImageURL: data.picture
-                }
+                    profileImageURL: data.picture,
+                },
             });
         }
         // generate token for user
-        const userInDB = yield db_1.prismaClient.user.findUnique({ where: { email: data.email } });
+        const userInDB = yield db_1.prismaClient.user.findUnique({
+            where: { email: data.email },
+        });
         if (!userInDB)
             throw new Error("User with email not found");
         const userToken = jwt_1.default.generateTokenForUser(userInDB);
@@ -52,6 +56,11 @@ const queries = {
             return null;
         const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
         return user;
-    })
+    }),
 };
-exports.resolvers = { queries };
+const extraResolvers = {
+    User: {
+        tweets: (parent) => db_1.prismaClient.tweet.findMany({ where: { author: { id: parent.id } } }),
+    },
+};
+exports.resolvers = { queries, extraResolvers };
